@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CARTIFY - Modern E-Commerce</title>
+    <meta property="og:image" content="https://bolt.new/static/og_default.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://bolt.new/static/og_default.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* This is the fix for the mega-menu */
+        .mega-menu {
+            display: none;
+            position: fixed;      /* Changed from 'absolute' */
+            top: 80px;            /* Added (to position below your 80px 'h-20' header) */
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            z-index: 50;
+        }
+
+        .nav-item:hover .mega-menu {
+            display: block;
+        }
+
+        .deal-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 0 0 1rem 1rem;
+        }
+
+        .deal-card::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .color-checkbox:checked + label {
+            transform: scale(1.2);
+            box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.3);
+        }
+
+        .product-card {
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        #cart-flyout {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 400px;
+            max-width: 90vw;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 25px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            display: flex; /* Added for layout */
+            flex-direction: column; /* Added for layout */
+        }
+
+        #cart-flyout.active {
+            right: 0;
+        }
+        
+        #cart-items {
+            flex-grow: 1; /* Makes the cart items list take available space */
+        }
+
+        #cart-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        #cart-overlay.active {
+            display: block;
+        }
+
+        #auth-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            z-index: 1001;
+            display: none;
+            min-width: 400px;
+            max-width: 90vw;
+        }
+
+        #auth-modal.active {
+            display: block;
+        }
+
+        .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ec4899;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        /* Input field focus style */
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #ec4899;
+            box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-white">
+
+    <header class="sticky top-0 bg-white/95 backdrop-blur-lg shadow-sm z-50">
+        <!-- ... (existing header HTML is unchanged) ... -->
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center gap-8">
+                    <a href="#" class="nav-link flex items-center gap-2" data-page="home-page">
+                        <i class="ph-bold ph-sketch-logo text-3xl text-pink-500"></i>
+                        <span class="text-2xl font-bold">CARTIFY</span>
+                    </a>
+
+                    <nav class="hidden lg:flex items-center gap-6">
+                        <div class="nav-item relative">
+                            <button class="nav-link font-bold uppercase tracking-wider text-sm hover:text-pink-500" data-page="products-page" data-gender="men">MEN</button>
+                            <div class="mega-menu">
+                                <div class="container mx-auto px-4 py-8">
+                                    <div class="grid grid-cols-5 gap-8">
+                                        <div>
+                                            <h3 class="font-bold mb-3 text-pink-500">Topwear</h3>
+                                            <ul class="space-y-2 text-sm">
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="T-shirts">T-shirts</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Shirts">Shirts</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Jackets">Jackets</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Sweaters">Sweaters</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Sweatshirts">Sweatshirts</a></li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold mb-3 text-pink-500">Bottomwear</h3>
+                                            <ul class="space-y-2 text-sm">
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Jeans">Jeans</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Trousers">Trousers</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Shorts">Shorts</a></li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold mb-3 text-pink-500">Footwear</h3>
+                                            <ul class="space-y-2 text-sm">
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Sneakers">Sneakers</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Boots">Boots</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Formal Shoes">Formal Shoes</a></li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold mb-3 text-pink-500">Sports & Gadgets</h3>
+                                            <ul class="space-y-2 text-sm">
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Sports Shoes">Sports Shoes</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Activewear">Activewear</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Smartwatches">Smartwatches</a></li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold mb-3 text-pink-500">Fashion Accessories</h3>
+                                            <ul class="space-y-2 text-sm">
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Watches">Watches</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Belts">Belts</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Sunglasses & Frames">Sunglasses & Frames</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="men" data-subcategory="Wallets">Wallets</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="nav-item relative">
+                            <button class="nav-link font-bold uppercase tracking-wider text-sm hover:text-pink-500" data-page="products-page" data-gender="women">WOMEN</button>
+                            <div class="mega-menu">
+                                <div class="container mx-auto px-4 py-8">
+                                    <div class="grid grid-cols-5 gap-8">
+                                        <div>
+                                            <h3 class="font-bold mb-3 text-pink-500">Indian Wear</h3>
+                                            <ul class="space-y-2 text-sm">
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Kurtas">Kurtas</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Sarees">Sarees</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Lehengas">Lehengas</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Salwar Suits">Salwar Suits</a></li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold mb-3 text-pink-500">Western Wear</h3>
+                                            <ul class="space-y-2 text-sm">
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Dresses">Dresses</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Tops">Tops</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Jeans">Jeans</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Blazers & Coats">Blazers & Coats</a></li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold mb-3 text-pink-500">Lingerie & Footwear</h3>
+                                            <ul class="space-y-2 text-sm">
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Lingerie">Lingerie</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Sneakers">Sneakers</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Heels">Heels</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Flats">Flats</a></li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold mb-3 text-pink-500">Sports & Beauty</h3>
+                                            <ul class="space-y-2 text-sm">
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Sports Shoes">Sports Shoes</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Activewear">Activewear</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Beauty">Beauty</a></li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold mb-3 text-pink-500">Gadgets & Jewellery</h3>
+                                            <ul class="space-y-2 text-sm">
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Smartwatches">Smartwatches</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Jewellery">Jewellery</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Sunglasses & Frames">Sunglasses & Frames</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="women" data-subcategory="Handbags">Handbags</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="nav-item relative">
+                            <button class="nav-link font-bold uppercase tracking-wider text-sm hover:text-pink-500" data-page="products-page" data-gender="kids">KIDS</button>
+                            <div class="mega-menu">
+                                <div class="container mx-auto px-4 py-8">
+                                    <div class="grid grid-cols-5 gap-8">
+                                        <div>
+                                            <h3 class="font-bold mb-3 text-pink-500">Boys Clothing</h3>
+                                            <ul class="space-y-2 text-sm">
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="T-shirts">T-shirts</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="Shirts">Shirts</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="Jeans">Jeans</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="Shorts">Shorts</a></li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold mb-3 text-pink-500">Girls Clothing</h3>
+                                            <ul class="space-y-2 text-sm">
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="Dresses">Dresses</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="Tops">Tops</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="Lehengas">Lehengas</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="Skirts">Skirts</a></li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold mb-3 text-pink-500">Footwear</h3>
+                                            <ul class="space-y-2 text-sm">
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="Sneakers">Sneakers</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="Sandals">Sandals</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="School Shoes">School Shoes</a></li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold mb-3 text-pink-500">Infants</h3>
+                                            <ul class="space-y-2 text-sm">
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="Rompers">Rompers</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="Bodysuits">Bodysuits</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="Sleepwear">Sleepwear</a></li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold mb-3 text-pink-500">Accessories</h3>
+                                            <ul class="space-y-2 text-sm">
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="Bags">Bags</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="Caps">Caps</a></li>
+                                                <li><a href="#" class="nav-link hover:text-pink-500" data-page="products-page" data-gender="kids" data-subcategory="Sunglasses & Frames">Sunglasses & Frames</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="nav-link font-bold uppercase tracking-wider text-sm hover:text-pink-500" data-page="deals-page">DEALS</button>
+                    </nav>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="hidden md:flex items-center bg-slate-100 rounded-md px-4 py-2 w-80">
+                        <i class="ph ph-magnifying-glass text-gray-400"></i>
+                        <input type="text" placeholder="Search for products..." class="bg-transparent border-none outline-none ml-2 w-full text-sm">
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <button id="profile-btn" class="flex flex-col items-center hover:text-pink-500 transition">
+                            <i class="ph ph-user text-2xl"></i>
+                            <span class="text-xs hidden sm:block">Profile</span>
+                        </button>
+
+                        <button id="wishlist-btn" class="flex flex-col items-center hover:text-pink-500 transition relative">
+                            <i class="ph ph-heart text-2xl"></i>
+                            <span class="text-xs hidden sm:block">Wishlist</span>
+                            <span id="wishlist-count" class="badge">0</span>
+                        </button>
+
+                        <button id="cart-btn" class="flex flex-col items-center hover:text-pink-500 transition relative">
+                            <i class="ph ph-shopping-bag text-2xl"></i>
+                            <span class="text-xs hidden sm:block">Bag</span>
+                            <span id="cart-count" class="badge">0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ... (existing home-page, products-page, deals-page HTML are unchanged) ... -->
+    <div id="home-page" class="page active">
+        <section class="relative h-[600px] overflow-hidden">
+            <img src="Image/Banner.jpeg" alt="Autumn Sale" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40"></div>
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-white text-center">
+                <h1 class="hero-title text-6xl font-bold mb-4">FALL INTO STYLE</h1>
+                <h2 class="hero-subtitle text-4xl font-semibold mb-6">COZY DEALS AWAIT!</h2>
+                <p class="hero-discount text-7xl font-black text-yellow-400 mb-8">50-80% OFF</p>
+                <button id="autumn-sale-btn" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 px-12 rounded-lg text-lg transition">
+                    SHOP NOW
+                </button>
+            </div>
+        </section>
+
+        <section class="bg-white py-4 border-b">
+            <div class="container mx-auto px-4 flex items-center justify-center gap-8 text-sm">
+                <div class="flex items-center gap-2">
+                    <span class="font-semibold">Title Sponsor:</span>
+                    <span class="text-pink-500 font-bold">BIBA</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="font-semibold">Associate Sponsor:</span>
+                    <span class="text-pink-500 font-bold">realme</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-16 bg-slate-100">
+            <div class="container mx-auto px-4">
+                <h2 class="text-3xl font-bold text-center mb-12">SHOP BY CATEGORY</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <a href="#" class="nav-link group relative block aspect-[3/4] rounded-lg overflow-hidden" data-page="products-page" data-gender="men">
+                        <img src="https://images.unsplash.com/photo-1516257984-b1b4d707412e?w=600" alt="Men" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                            <h3 class="text-white font-bold text-2xl">MEN</h3>
+                        </div>
+                    </a>
+                    <a href="#" class="nav-link group relative block aspect-[3/4] rounded-lg overflow-hidden" data-page="products-page" data-gender="women">
+                        <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600" alt="Women" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                            <h3 class="text-white font-bold text-2xl">WOMEN</h3>
+                        </div>
+                    </a>
+                    <a href="#" class="nav-link group relative block aspect-[3/4] rounded-lg overflow-hidden" data-page="products-page" data-gender="kids">
+                        <img src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=600" alt="Kids" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                            <h3 class="text-white font-bold text-2xl">KIDS</h3>
+                        </div>
+                    </a>
+                    <a href="#" class="nav-link group relative block aspect-[3/4] rounded-lg overflow-hidden" data-page="products-page" data-subcategory="Kurtas,Sarees,Lehengas">
+                        <img src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600" alt="Ethnic Wear" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                            <h3 class="text-white font-bold text-2xl">ETHNIC WEAR</h3>
+                        </div>
+                    </a>
+                    <a href="#" class="nav-link group relative block aspect-[3/4] rounded-lg overflow-hidden" data-page="products-page" data-subcategory="Sneakers">
+                        <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600" alt="Sneakers" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                            <h3 class="text-white font-bold text-2xl">SNEAKERS</h3>
+                        </div>
+                    </a>
+                    <a href="#" class="nav-link group relative block aspect-[3/4] rounded-lg overflow-hidden" data-page="products-page" data-subcategory="Beauty">
+                        <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600" alt="Beauty" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                            <h3 class="text-white font-bold text-2xl">BEAUTY</h3>
+                        </div>
+                    </a>
+                    <a href="#" class="nav-link group relative block aspect-[3/4] rounded-lg overflow-hidden" data-page="products-page" data-subcategory="Jackets">
+                        <img src="https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600" alt="Jackets" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                            <h3 class="text-white font-bold text-2xl">JACKETS</h3>
+                        </div>
+                    </a>
+                    <a href="#" class="nav-link group relative block aspect-[3/4] rounded-lg overflow-hidden" data-page="products-page" data-subcategory="Handbags">
+                        <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600" alt="Handbags" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                            <h3 class="text-white font-bold text-2xl">HANDBAGS</h3>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-16 relative" id="featured-section">
+            <div class="container mx-auto px-4">
+                <h2 class="text-3xl font-bold text-center mb-12">TOP PICKS FOR YOU</h2>
+                <div class="relative">
+                    <button id="featured-prev" class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-3 shadow-lg hover:bg-pink-500 hover:text-white transition opacity-0 group-hover:opacity-100">
+                        <i class="ph-bold ph-caret-left text-2xl"></i>
+                    </button>
+                    <div id="featured-products-grid" class="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth">
+                    </div>
+                    <button id="featured-next" class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-3 shadow-lg hover:bg-pink-500 hover:text-white transition opacity-0 group-hover:opacity-100">
+                        <i class="ph-bold ph-caret-right text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-16 bg-purple-900">
+            <div class="container mx-auto px-4">
+                <h2 class="text-5xl font-serif font-bold text-center mb-12 text-yellow-400">CRAZY DEALS</h2>
+                <div class="relative group">
+                    <button id="crazy-deals-prev" class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-3 shadow-lg hover:bg-pink-500 hover:text-white transition opacity-0 group-hover:opacity-100">
+                        <i class="ph-bold ph-caret-left text-2xl"></i>
+                    </button>
+                    <div id="crazy-deals-container" class="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth">
+                    </div>
+                    <button id="crazy-deals-next" class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-3 shadow-lg hover:bg-pink-500 hover:text-white transition opacity-0 group-hover:opacity-100">
+                        <i class="ph-bold ph-caret-right text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="products-page" class="page">
+        <div class="container mx-auto px-4 py-8">
+            <div class="grid lg:grid-cols-4 gap-8">
+                <aside class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-6 lg:sticky lg:top-24">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="font-bold text-lg">FILTERS</h3>
+                            <button id="clear-filters" class="text-pink-500 text-sm font-semibold hover:text-pink-600">CLEAR ALL</button>
+                        </div>
+
+                        <div class="mb-6">
+                            <h4 class="font-semibold mb-3">CATEGORIES</h4>
+                            <div id="category-filters" class="space-y-2 max-h-64 overflow-y-auto">
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <h4 class="font-semibold mb-3">BRANDS</h4>
+                            <div id="brand-filters" class="space-y-2 max-h-64 overflow-y-auto">
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <h4 class="font-semibold mb-3">PRICE</h4>
+                            <div id="price-filters" class="space-y-2">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="price" value="0-499" class="price-filter">
+                                    <span class="text-sm">₹0 to ₹499</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="price" value="500-999" class="price-filter">
+                                    <span class="text-sm">₹500 to ₹999</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="price" value="1000-1999" class="price-filter">
+                                    <span class="text-sm">₹1000 to ₹1999</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="price" value="2000-4999" class="price-filter">
+                                    <span class="text-sm">₹2000 to ₹4999</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="price" value="5000-99999" class="price-filter">
+                                    <span class="text-sm">₹5000+</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <h4 class="font-semibold mb-3">COLOR</h4>
+                            <div id="color-filters" class="grid grid-cols-5 gap-3">
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <main class="lg:col-span-3">
+                    <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <div id="deals-page" class="page">
+        <div class="container mx-auto px-4 py-8">
+            <h1 class="text-4xl font-bold mb-8">CRAZY DEALS</h1>
+            <div id="deals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================== -->
+    <!-- === NEW CHECKOUT PAGE === -->
+    <!-- =================================== -->
+    <div id="checkout-page" class="page">
+        <div class="container mx-auto px-4 py-16 max-w-4xl">
+            <h1 class="text-4xl font-bold mb-8">Checkout</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <!-- Shipping Address Form -->
+                <div>
+                    <h2 class="text-2xl font-semibold mb-6">Shipping Address</h2>
+                    <form id="address-form" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Full Name</label>
+                            <input type="text" id="name" class="w-full border rounded-lg px-4 py-2 transition" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Email Address</label>
+                            <input type="email" id="email" class="w-full border rounded-lg px-4 py-2 transition" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Phone Number</label>
+                            <input type="tel" id="phone" class="w-full border rounded-lg px-4 py-2 transition" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Address (Line 1)</label>
+                            <input type="text" id="address1" class="w-full border rounded-lg px-4 py-2 transition" required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">City</label>
+                                <input type="text" id="city" class="w-full border rounded-lg px-4 py-2 transition" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">State</label>
+                                <input type="text" id="state" class="w-full border rounded-lg px-4 py-2 transition" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">ZIP Code</label>
+                            <input type="text" id="zip" class="w-full border rounded-lg px-4 py-2 transition" required>
+                        </div>
+                        <button type="submit" id="submit-address-btn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-lg transition mt-6">
+                            Proceed to Payment
+                        </button>
+                    </form>
+                </div>
+                <!-- Order Summary -->
+                <div>
+                    <h2 class="text-2xl font-semibold mb-6">Order Summary</h2>
+                    <div class="bg-slate-100 rounded-lg p-6">
+                        <div id="checkout-items" class="space-y-4 max-h-64 overflow-y-auto pr-2">
+                            <!-- Items will be injected here by JS -->
+                        </div>
+                        <div class="space-y-2 mt-6 pt-6 border-t">
+                            <div class="flex justify-between text-sm">
+                                <span>Subtotal:</span>
+                                <span id="checkout-subtotal">₹0</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span>Shipping:</span>
+                                <span id="checkout-shipping">₹0</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span>Tax:</span>
+                                <span id="checkout-tax">₹0</span>
+                            </div>
+                            <div class="flex justify-between text-lg font-bold pt-2 border-t">
+                                <span>Total:</span>
+                                <span id="checkout-total">₹0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================== -->
+    <!-- === NEW INVOICE PAGE === -->
+    <!-- =================================== -->
+    <div id="invoice-page" class="page">
+        <div class="container mx-auto px-4 py-16 max-w-4xl">
+            <div class="bg-white rounded-lg shadow-xl border p-8">
+                <div class="flex justify-between items-center mb-8 pb-8 border-b">
+                    <div>
+                        <i class="ph-bold ph-sketch-logo text-5xl text-pink-500"></i>
+                        <span class="text-4xl font-bold">CARTIFY</span>
+                        <p class="text-gray-500">Order Invoice</p>
+                    </div>
+                    <div class="text-right">
+                        <h2 class="text-2xl font-bold">INVOICE</h2>
+                        <p class="text-sm">#C-000123</p>
+                        <p class="text-sm" id="invoice-date">Nov 15, 2025</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-8 mb-8">
+                    <div>
+                        <h3 class="font-semibold mb-2">Shipping To:</h3>
+                        <div id="invoice-address" class="text-sm text-gray-700">
+                            <!-- Address injected by JS -->
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <h3 class="font-semibold mb-2">Payment Method:</h3>
+                        <p class="text-sm text-gray-700">Credit Card (Mock)</p>
+                        <h3 class="font-semibold mt-4 mb-2">Total Paid:</h3>
+                        <p class="text-3xl font-bold text-pink-500" id="invoice-total">₹0</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold mb-4">Items Summary</h3>
+                    <div class="space-y-4" id="invoice-items">
+                        <!-- Items injected by JS -->
+                    </div>
+                </div>
+
+                <div class="text-center mt-12">
+                    <button id="confirm-payment-btn" class="w-full max-w-xs bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-lg transition">
+                        Confirm & Pay (Mock)
+                    </button>
+                    <p class="text-xs text-gray-500 mt-2">This is a mock payment. No real transaction will occur.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================== -->
+    <!-- === NEW SUCCESS PAGE === -->
+    <!-- =================================== -->
+    <div id="success-page" class="page">
+        <div class="container mx-auto px-4 py-32 max-w-2xl text-center">
+            <i class="ph-bold ph-check-circle text-9xl text-green-500 mb-6"></i>
+            <h1 class="text-5xl font-bold mb-4">Congratulations!</h1>
+            <p class="text-2xl text-gray-700 mb-8">Your order has been placed successfully.</p>
+            <p class="text-lg text-gray-600 mb-12">We've sent a confirmation and your invoice to your email. Thank you for shopping with CARTIFY!</p>
+            <button id="new-order-btn" class="bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 px-12 rounded-lg text-lg transition">
+                Shop Again
+            </button>
+        </div>
+    </div>
+
+
+    <!-- =================================== -->
+    <!-- === CART FLYOUT & AUTH MODAL === -->
+    <!-- =================================== -->
+    <div id="cart-overlay"></div>
+    <div id="cart-flyout">
+        <div class="p-6 border-b flex items-center justify-between">
+            <h2 class="text-2xl font-bold">Shopping Bag</h2>
+            <button id="close-cart" class="text-gray-500 hover:text-black">
+                <i class="ph-bold ph-x text-2xl"></i>
+            </button>
+        </div>
+        <div id="cart-items" class="p-6 flex-1 overflow-y-auto">
+            <!-- Cart items will be injected here -->
+        </div>
+        <div class="p-6 border-t bg-white">
+            <div class="space-y-2 mb-4">
+                <div class="flex justify-between text-sm">
+                    <span>Subtotal:</span>
+                    <span id="cart-subtotal">₹0</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span>Shipping:</span>
+                    <span id="cart-shipping">₹0</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span>Tax:</span>
+                    <span id="cart-tax">₹0</span>
+                </div>
+                <div class="flex justify-between text-lg font-bold pt-2 border-t">
+                    <span>Total:</span>
+                    <span id="cart-total">₹0</span>
+                </div>
+            </div>
+            <!-- MODIFIED THIS BUTTON -->
+            <button id="checkout-btn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-lg transition disabled:bg-gray-300" disabled>
+                CHECKOUT
+            </button>
+        </div>
+    </div>
+
+    <div id="auth-modal">
+        <h2 class="text-2xl font-bold mb-6">Welcome Back!</h2>
+        <form class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold mb-2">Email</label>
+                <input type="email" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:border-pink-500">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold mb-2">Password</label>
+                <input type="password" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:border-pink-500">
+            </div>
+            <button type="submit" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 rounded-lg transition">
+                LOGIN
+            </button>
+        </form>
+        <button id="close-auth-modal" class="absolute top-4 right-4 text-gray-500 hover:text-black">
+            <i class="ph-bold ph-x text-2xl"></i>
+        </button>
+    </div>
+
+    <!-- =================================== -->
+    <!-- === JAVASCRIPT === -->
+    <!-- =================================== -->
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        const products = [
+            // ... (your existing product data is unchanged) ...
+            { id: 1, name: "Classic Denim Jacket", brand: "Levis", price: 2999, originalPrice: 4999, image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400", gender: "men", subcategory: "Jackets", color: "Blue", rating: 4.5 },
+            { id: 2, name: "Slim Fit Chinos", brand: "Jack & Jones", price: 1499, originalPrice: 2499, image: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=400", gender: "men", subcategory: "Trousers", color: "Beige", rating: 4.2 },
+            { id: 3, name: "Printed T-Shirt", brand: "Roadster", price: 399, originalPrice: 799, image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400", gender: "men", subcategory: "T-shirts", color: "White", rating: 4.0 },
+            { id: 4, name: "Cotton Casual Shirt", brand: "H&M", price: 999, originalPrice: 1499, image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400", gender: "men", subcategory: "Shirts", color: "Blue", rating: 4.3 },
+            { id: 5, name: "Running Shoes", brand: "Nike", price: 3499, originalPrice: 5999, image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400", gender: "men", subcategory: "Sneakers", color: "Black", rating: 4.7 },
+            { id: 6, name: "Leather Boots", brand: "Timberland", price: 5999, originalPrice: 8999, image: "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=400", gender: "men", subcategory: "Boots", color: "Brown", rating: 4.6 },
+            { id: 7, name: "Hooded Sweatshirt", brand: "Puma", price: 1799, originalPrice: 2999, image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400", gender: "men", subcategory: "Sweatshirts", color: "Black", rating: 4.4 },
+            { id: 8, name: "Wool Sweater", brand: "Zara", price: 2499, originalPrice: 3999, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400", gender: "men", subcategory: "Sweaters", color: "Grey", rating: 4.5 },
+            { id: 9, name: "Straight Fit Jeans", brand: "Levis", price: 2199, originalPrice: 3499, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400", gender: "men", subcategory: "Jeans", color: "Blue", rating: 4.6 },
+            { id: 10, name: "Cargo Shorts", brand: "H&M", price: 899, originalPrice: 1499, image: "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=400", gender: "men", subcategory: "Shorts", color: "Khaki", rating: 4.1 },
+            { id: 11, name: "Formal Leather Shoes", brand: "Clarks", price: 3999, originalPrice: 5999, image: "https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?w=400", gender: "men", subcategory: "Formal Shoes", color: "Black", rating: 4.5 },
+            { id: 12, name: "Sports Watch", brand: "Fossil", price: 4999, originalPrice: 7999, image: "https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=400", gender: "men", subcategory: "Watches", color: "Silver", rating: 4.7 },
+            { id: 13, name: "Leather Belt", brand: "Tommy Hilfiger", price: 1299, originalPrice: 1999, image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400", gender: "men", subcategory: "Belts", color: "Brown", rating: 4.3 },
+            { id: 14, name: "Aviator Sunglasses", brand: "Ray-Ban", price: 2999, originalPrice: 4999, image: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400", gender: "men", subcategory: "Sunglasses & Frames", color: "Black", rating: 4.8 },
+            { id: 15, name: "Leather Wallet", brand: "Fossil", price: 1499, originalPrice: 2499, image: "https://images.unsplash.com/photo-1627123424574-724758594e93?w=400", gender: "men", subcategory: "Wallets", color: "Brown", rating: 4.4 },
+            { id: 16, name: "Smartwatch Pro", brand: "Apple", price: 24999, originalPrice: 29999, image: "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=400", gender: "unisex", subcategory: "Smartwatches", color: "Black", rating: 4.9 },
+            { id: 17, name: "Training Joggers", brand: "Adidas", price: 1999, originalPrice: 2999, image: "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=400", gender: "womens", subcategory: "Activewear", color: "Black", rating: 4.5 },
+            { id: 18, name: "Running Sneakers", brand: "Nike", price: 2999, originalPrice: 4999, image: "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=400", gender: "men", subcategory: "Sports Shoes", color: "White", rating: 4.6 },
+            { id: 19, name: "Polo T-Shirt", brand: "Ralph Lauren", price: 1899, originalPrice: 2999, image: "https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=400", gender: "men", subcategory: "T-shirts", color: "Navy", rating: 4.7 },
+            { id: 20, name: "V-Neck Sweater", brand: "Zara", price: 1999, originalPrice: 2999, image: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=400", gender: "men", subcategory: "Sweaters", color: "Burgundy", rating: 4.4 },
+            { id: 21, name: "Floral Maxi Dress", brand: "Zara", price: 2499, originalPrice: 3999, image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400", gender: "women", subcategory: "Dresses", color: "Multi", rating: 4.6 },
+            { id: 22, name: "Silk Kurta Set", brand: "Biba", price: 1999, originalPrice: 3499, image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400", gender: "women", subcategory: "Kurtas", color: "Pink", rating: 4.7 },
+            { id: 23, name: "Designer Saree", brand: "FabIndia", price: 3999, originalPrice: 5999, image: "./Image/Saree.jpeg", gender: "women", subcategory: "Sarees", color: "Red", rating: 4.8 },
+            { id: 24, name: "Embroidered Lehenga", brand: "Kalki", price: 8999, originalPrice: 14999, image: "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=400", gender: "women", subcategory: "Lehengas", color: "Blue", rating: 4.9 },
+            { id: 25, name: "Cotton Salwar Suit", brand: "W", price: 1499, originalPrice: 2499, image: "https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=400", gender: "women", subcategory: "Salwar Suits", color: "Green", rating: 4.5 },
+            { id: 26, name: "Casual Top", brand: "H&M", price: 699, originalPrice: 999, image: "./Image/Casual_top.jpg", gender: "women", subcategory: "Tops", color: "White", rating: 4.2 },
+            { id: 27, name: "Skinny Fit Jeans", brand: "Levis", price: 1999, originalPrice: 2999, image: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=400", gender: "women", subcategory: "Jeans", color: "Blue", rating: 4.4 },
+            { id: 28, name: "Formal Blazer", brand: "Zara", price: 3499, originalPrice: 4999, image: "https://images.unsplash.com/photo-1591369822096-ffd140ec948f?w=400", gender: "women", subcategory: "Blazers & Coats", color: "Black", rating: 4.6 },
+            { id: 29, name: "Winter Coat", brand: "Mango", price: 4999, originalPrice: 7999, image: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=400", gender: "women", subcategory: "Blazers & Coats", color: "Camel", rating: 4.7 },
+            { id: 30, name: "White Sneakers", brand: "Nike", price: 2999, originalPrice: 4499, image: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400", gender: "women", subcategory: "Sneakers", color: "White", rating: 4.5 },
+            { id: 31, name: "Block Heels", brand: "Steve Madden", price: 2499, originalPrice: 3999, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400", gender: "women", subcategory: "Heels", color: "Nude", rating: 4.4 },
+            { id: 32, name: "Ballet Flats", brand: "Clarks", price: 1799, originalPrice: 2999, image: "./Image/Ballet_flats.jpg", gender: "women", subcategory: "Flats", color: "Black", rating: 4.3 },
+            { id: 33, name: "Designer Handbag", brand: "Michael Kors", price: 5999, originalPrice: 8999, image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400", gender: "women", subcategory: "Handbags", color: "Brown", rating: 4.8 },
+            { id: 34, name: "Cat-Eye Sunglasses", brand: "Ray-Ban", price: 2799, originalPrice: 4499, image: "https://images.unsplash.com/photo-1577803645773-f96470509666?w=400", gender: "women", subcategory: "Sunglasses & Frames", color: "Tortoise", rating: 4.7 },
+            { id: 35, name: "Gold Necklace", brand: "Tanishq", price: 4999, originalPrice: 6999, image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400", gender: "women", subcategory: "Jewellery", color: "Gold", rating: 4.9 },
+            { id: 36, name: "Fitness Tracker", brand: "Fitbit", price: 3999, originalPrice: 5999, image: "https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=400", gender: "women", subcategory: "Smartwatches", color: "Pink", rating: 4.6 },
+            { id: 37, name: "Yoga Pants", brand: "Lululemon", price: 2999, originalPrice: 4499, image: "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=400", gender: "women", subcategory: "Activewear", color: "Black", rating: 4.7 },
+            { id: 38, name: "Running Shoes", brand: "Adidas", price: 2799, originalPrice: 3999, image: "https://images.unsplash.com/photo-1562183241-b937e95585b6?w=400", gender: "women", subcategory: "Sports Shoes", color: "Grey", rating: 4.5 },
+            { id: 39, name: "Lipstick Set", brand: "MAC", price: 1999, originalPrice: 2999, image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400", gender: "women", subcategory: "Beauty", color: "Multi", rating: 4.8 },
+            { id: 40, name: "Skincare Kit", brand: "Neutrogena", price: 1499, originalPrice: 2499, image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400", gender: "women", subcategory: "Beauty", color: "White", rating: 4.6 },
+            { id: 41, name: "Boys Graphic Tee", brand: "GAP", price: 499, originalPrice: 799, image: "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=400", gender: "kids", subcategory: "T-shirts", color: "Blue", rating: 4.3 },
+            { id: 42, name: "Boys Casual Shirt", brand: "H&M", price: 699, originalPrice: 999, image: "https://images.unsplash.com/photo-1596870230751-ebdfce98ec42?w=400", gender: "kids", subcategory: "Shirts", color: "White", rating: 4.2 },
+            { id: 43, name: "Boys Denim Jeans", brand: "Levis", price: 999, originalPrice: 1499, image: "https://images.unsplash.com/photo-1582418702059-97ebafb35d09?w=400", gender: "kids", subcategory: "Jeans", color: "Blue", rating: 4.4 },
+            { id: 44, name: "Boys Cargo Shorts", brand: "UCB", price: 599, originalPrice: 999, image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400", gender: "kids", subcategory: "Shorts", color: "Khaki", rating: 4.1 },
+            { id: 45, name: "Girls Party Dress", brand: "Zara", price: 1299, originalPrice: 1999, image: "https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=400", gender: "kids", subcategory: "Dresses", color: "Pink", rating: 4.6 },
+            { id: 46, name: "Girls Casual Top", brand: "H&M", price: 499, originalPrice: 799, image: "https://images.unsplash.com/photo-1596870230751-ebdfce98ec42?w=400", gender: "kids", subcategory: "Tops", color: "Yellow", rating: 4.2 },
+            { id: 47, name: "Girls Lehenga", brand: "Biba", price: 1999, originalPrice: 2999, image: "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=400", gender: "kids", subcategory: "Lehengas", color: "Red", rating: 4.7 },
+            { id: 48, name: "Girls Denim Skirt", brand: "GAP", price: 799, originalPrice: 1299, image: "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=400", gender: "kids", subcategory: "Skirts", color: "Blue", rating: 4.3 },
+            { id: 49, name: "Kids Sneakers", brand: "Nike", price: 1499, originalPrice: 2499, image: "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=400", gender: "kids", subcategory: "Sneakers", color: "Red", rating: 4.5 },
+            { id: 50, name: "Kids Sandals", brand: "Crocs", price: 999, originalPrice: 1499, image: "https://images.unsplash.com/photo-1603487742131-4160ec999306?w=400", gender: "kids", subcategory: "Sandals", color: "Blue", rating: 4.4 },
+            { id: 51, name: "Kids School Shoes", brand: "Bata", price: 799, originalPrice: 1299, image: "https://images.unsplash.com/photo-1519415510236-718bdfcd89c8?w=400", gender: "kids", subcategory: "School Shoes", color: "Black", rating: 4.3 },
+            { id: 52, name: "Baby Romper", brand: "Mothercare", price: 599, originalPrice: 999, image: "https://images.unsplash.com/photo-1522771930-78848d9293e8?w=400", gender: "kids", subcategory: "Rompers", color: "White", rating: 4.5 },
+            { id: 53, name: "Baby Bodysuit", brand: "Carters", price: 499, originalPrice: 799, image: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400", gender: "kids", subcategory: "Bodysuits", color: "Yellow", rating: 4.4 },
+            { id: 54, name: "Kids Sleepwear Set", brand: "H&M", price: 799, originalPrice: 1299, image: "https://images.unsplash.com/photo-1578070181910-f1e514afdd08?w=400", gender: "kids", subcategory: "Sleepwear", color: "Blue", rating: 4.3 },
+            { id: 55, name: "Kids School Bag", brand: "Wildcraft", price: 899, originalPrice: 1499, image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400", gender: "kids", subcategory: "Bags", color: "Blue", rating: 4.5 },
+            { id: 56, name: "Kids Cap", brand: "Puma", price: 399, originalPrice: 699, image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=400", gender: "kids", subcategory: "Caps", color: "Black", rating: 4.2 },
+            { id: 57, name: "Kids Sunglasses", brand: "Ray-Ban", price: 1299, originalPrice: 1999, image: "https://images.unsplash.com/photo-1577803645773-f96470509666?w=400", gender: "kids", subcategory: "Sunglasses & Frames", color: "Multi", rating: 4.6 },
+            { id: 58, name: "Polarized Sunglasses", brand: "Oakley", price: 3999, originalPrice: 5999, image: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400", gender: "men", subcategory: "Sunglasses & Frames", color: "Black", rating: 4.8 },
+            { id: 59, name: "Round Frame Glasses", brand: "Warby Parker", price: 2499, originalPrice: 3999, image: "https://images.unsplash.com/photo-1577803645773-f96470509666?w=400", gender: "unisex", subcategory: "Sunglasses & Frames", color: "Gold", rating: 4.7 },
+            { id: 60, name: "Oversized Sunglasses", brand: "Gucci", price: 8999, originalPrice: 12999, image: "https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=400", gender: "women", subcategory: "Sunglasses & Frames", color: "Brown", rating: 4.9 },
+            { id: 61, name: "Sport Sunglasses", brand: "Oakley", price: 3499, originalPrice: 4999, image: "https://images.unsplash.com/photo-1508296695146-257a814070b4?w=400", gender: "men", subcategory: "Sunglasses & Frames", color: "Black", rating: 4.7 },
+            { id: 62, name: "Classic Wayfarer", brand: "Ray-Ban", price: 3999, originalPrice: 5999, image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400", gender: "unisex", subcategory: "Sunglasses & Frames", color: "Black", rating: 4.8 },
+            { id: 63, name: "Blue Light Glasses", brand: "Warby Parker", price: 1999, originalPrice: 2999, image: "https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=400", gender: "unisex", subcategory: "Sunglasses & Frames", color: "Clear", rating: 4.6 },
+            { id: 64, name: "Vintage Round Frames", brand: "Ray-Ban", price: 2999, originalPrice: 4499, image: "https://images.unsplash.com/photo-1582142306909-195724d033c4?w=400", gender: "women", subcategory: "Sunglasses & Frames", color: "Gold", rating: 4.7 },
+            { id: 65, name: "Pilot Sunglasses", brand: "Oakley", price: 3799, originalPrice: 5499, image: "https://images.unsplash.com/photo-1556306535-0f09a537f0a3?w=400", gender: "men", subcategory: "Sunglasses & Frames", color: "Silver", rating: 4.8 },
+            { id: 66, name: "Cat Eye Frames", brand: "Vogue", price: 2199, originalPrice: 3499, image: "https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=400", gender: "women", subcategory: "Sunglasses & Frames", color: "Red", rating: 4.6 },
+            { id: 67, name: "Square Frame Glasses", brand: "Tom Ford", price: 5999, originalPrice: 8999, image: "./Image/Sunglass.jpg", gender: "men", subcategory: "Sunglasses & Frames", color: "Black", rating: 4.9 },
+            { id: 68, name: "Mirrored Sunglasses", brand: "Ray-Ban", price: 3499, originalPrice: 4999, image: "https://images.unsplash.com/photo-1589782182703-2aaa69037b5b?w=400", gender: "unisex", subcategory: "Sunglasses & Frames", color: "Blue", rating: 4.7 },
+            { id: 69, name: "Gradient Lens Sunglasses", brand: "Gucci", price: 7999, originalPrice: 11999, image: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400", gender: "women", subcategory: "Sunglasses & Frames", color: "Brown", rating: 4.8 },
+            { id: 70, name: "Kids Colorful Frames", brand: "Disney", price: 899, originalPrice: 1499, image: "https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=400", gender: "kids", subcategory: "Sunglasses & Frames", color: "Multi", rating: 4.5 },
+            { id: 71, name: "Rectangle Frame Glasses", brand: "Warby Parker", price: 2299, originalPrice: 3299, image: "https://images.unsplash.com/photo-1622445275463-afa2ab738c34?w=400", gender: "men", subcategory: "Sunglasses & Frames", color: "Black", rating: 4.6 },
+            { id: 72, name: "Retro Style Sunglasses", brand: "Ray-Ban", price: 3299, originalPrice: 4799, image: "https://images.unsplash.com/photo-1584941267805-456eac0b969d?w=400", gender: "women", subcategory: "Sunglasses & Frames", color: "Tortoise", rating: 4.7 },
+            { id: 73, name: "Leather Bomber Jacket", brand: "Zara", price: 5999, originalPrice: 8999, image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400", gender: "men", subcategory: "Jackets", color: "Black", rating: 4.7 },
+            { id: 74, name: "Puffer Jacket", brand: "The North Face", price: 4999, originalPrice: 7999, image: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=400", gender: "women", subcategory: "Jackets", color: "Navy", rating: 4.8 },
+            { id: 75, name: "Windbreaker Jacket", brand: "Nike", price: 2999, originalPrice: 4499, image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400", gender: "men", subcategory: "Jackets", color: "Grey", rating: 4.5 },
+            { id: 76, name: "Wool Overcoat", brand: "H&M", price: 4499, originalPrice: 6999, image: "https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?w=400", gender: "women", subcategory: "Jackets", color: "Grey", rating: 4.6 },
+            { id: 77, name: "Women's Trench Coat", brand: "Zara", price: 5499, originalPrice: 8499, image: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=400", gender: "women", subcategory: "Blazers & Coats", color: "Beige", rating: 4.7 },
+            { id: 78, name: "Quilted Jacket", brand: "Mango", price: 3999, originalPrice: 5999, image: "https://images.unsplash.com/photo-1591369822096-ffd140ec948f?w=400", gender: "women", subcategory: "Blazers & Coats", color: "Black", rating: 4.6 },
+            { id: 79, name: "Cable Knit Sweater", brand: "Gap", price: 1999, originalPrice: 2999, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400", gender: "men", subcategory: "Sweaters", color: "Cream", rating: 4.5 },
+            { id: 80, name: "Turtleneck Sweater", brand: "Uniqlo", price: 1799, originalPrice: 2799, image: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=400", gender: "men", subcategory: "Sweaters", color: "Black", rating: 4.4 },
+            { id: 81, name: "Cardigan Sweater", brand: "Zara", price: 2199, originalPrice: 3199, image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400", gender: "men", subcategory: "Sweaters", color: "Navy", rating: 4.6 },
+            { id: 82, name: "Cashmere Sweater", brand: "Marks & Spencer", price: 4999, originalPrice: 7999, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400", gender: "women", subcategory: "Sweaters", color: "Grey", rating: 4.8 },
+            { id: 83, name: "Chelsea Boots", brand: "Clarks", price: 4999, originalPrice: 6999, image: "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=400", gender: "men", subcategory: "Boots", color: "Brown", rating: 4.7 },
+            { id: 84, name: "Combat Boots", brand: "Dr. Martens", price: 5999, originalPrice: 8999, image: "https://images.unsplash.com/photo-1542840410-3092f99611a3?w=400", gender: "men", subcategory: "Boots", color: "Black", rating: 4.8 },
+            { id: 85, name: "Hiking Boots", brand: "Timberland", price: 6999, originalPrice: 9999, image: "https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=400", gender: "men", subcategory: "Boots", color: "Brown", rating: 4.9 },
+            { id: 86, name: "Ankle Boots", brand: "Steve Madden", price: 3999, originalPrice: 5999, image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400", gender: "women", subcategory: "Boots", color: "Black", rating: 4.6 },
+            { id: 87, name: "Knee High Boots", brand: "Aldo", price: 4999, originalPrice: 7499, image: "https://images.unsplash.com/photo-1608912734357-a0b92d87c4c6?w=400", gender: "women", subcategory: "Boots", color: "Brown", rating: 4.7 },
+            { id: 88, name: "Zip-Up Hoodie", brand: "Nike", price: 2199, originalPrice: 3299, image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400", gender: "men", subcategory: "Sweatshirts", color: "Grey", rating: 4.5 },
+            { id: 89, name: "Pullover Hoodie", brand: "Adidas", price: 1999, originalPrice: 2999, image: "https://images.unsplash.com/photo-1620799139834-6b8f844fbe61?w=400", gender: "men", subcategory: "Sweatshirts", color: "Navy", rating: 4.4 },
+            { id: 90, name: "Graphic Sweatshirt", brand: "H&M", price: 1299, originalPrice: 1999, image: "https://images.unsplash.com/photo-1578587018452-892bacefd3f2?w=400", gender: "women", subcategory: "Sweatshirts", color: "White", rating: 4.3 },
+            { id: 91, name: "Oversized Hoodie", brand: "Zara", price: 1799, originalPrice: 2499, image: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=400", gender: "women", subcategory: "Sweatshirts", color: "Beige", rating: 4.5 },
+            { id: 92, name: "Striped Polo Shirt", brand: "Tommy Hilfiger", price: 1599, originalPrice: 2499, image: "https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=400", gender: "men", subcategory: "Shirts", color: "Blue", rating: 4.4 },
+            { id: 93, name: "Linen Shirt", brand: "Zara", price: 1299, originalPrice: 1999, image: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=400", gender: "men", subcategory: "Shirts", color: "White", rating: 4.5 },
+            { id: 94, name: "Denim Shirt", brand: "Levis", price: 1799, originalPrice: 2799, image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400", gender: "men", subcategory: "Shirts", color: "Blue", rating: 4.6 },
+            { id: 95, name: "Checkered Shirt", brand: "H&M", price: 999, originalPrice: 1499, image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=400", gender: "men", subcategory: "Shirts", color: "Red", rating: 4.3 },
+            { id: 96, name: "Crop Top", brand: "Forever 21", price: 599, originalPrice: 999, image: "https://images.unsplash.com/photo-1564257577633-9a31aec2f093?w=400", gender: "women", subcategory: "Tops", color: "Black", rating: 4.2 },
+            { id: 97, name: "Tank Top", brand: "H&M", price: 399, originalPrice: 699, image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=400", gender: "women", subcategory: "Tops", color: "White", rating: 4.1 },
+            { id: 98, name: "Blouse", brand: "Zara", price: 1299, originalPrice: 1999, image: "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=400", gender: "women", subcategory: "Tops", color: "Pink", rating: 4.4 },
+            { id: 99, name: "Tunic Top", brand: "W", price: 999, originalPrice: 1499, image: "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=400", gender: "women", subcategory: "Tops", color: "Blue", rating: 4.3 },
+            { id: 100, name: "Peplum Top", brand: "Vero Moda", price: 1199, originalPrice: 1799, image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=400", gender: "women", subcategory: "Tops", color: "Red", rating: 4.5 },
+            { id: 101, name: "Slim Fit T-Shirt", brand: "Nike", price: 699, originalPrice: 1199, image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400", gender: "men", subcategory: "T-shirts", color: "Black", rating: 4.3 },
+            { id: 102, name: "Henley T-Shirt", brand: "Gap", price: 799, originalPrice: 1299, image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=400", gender: "men", subcategory: "T-shirts", color: "Grey", rating: 4.2 },
+            { id: 103, name: "V-Neck T-Shirt", brand: "H&M", price: 499, originalPrice: 799, image: "https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=400", gender: "men", subcategory: "T-shirts", color: "White", rating: 4.1 },
+            { id: 104, name: "Printed Kurta", brand: "FabIndia", price: 1499, originalPrice: 2299, image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400", gender: "women", subcategory: "Kurtas", color: "Blue", rating: 4.6 },
+            { id: 105, name: "A-Line Kurta", brand: "W", price: 1299, originalPrice: 1999, image: "https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=400", gender: "women", subcategory: "Kurtas", color: "Green", rating: 4.5 },
+            { id: 106, name: "Straight Kurta", brand: "Biba", price: 1199, originalPrice: 1799, image: "https://images.unsplash.com/photo-1583391733981-e8536c0b9322?w=400", gender: "women", subcategory: "Kurtas", color: "Yellow", rating: 4.4 },
+            { id: 107, name: "Anarkali Kurta", brand: "Global Desi", price: 1799, originalPrice: 2799, image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400", gender: "women", subcategory: "Kurtas", color: "Red", rating: 4.7 },
+            { id: 108, name: "Running Sneakers Pro", brand: "Puma", price: 3299, originalPrice: 4999, image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400", gender: "unisex", subcategory: "Sneakers", color: "White", rating: 4.6 },
+            { id: 109, name: "High-Top Sneakers", brand: "Converse", price: 2799, originalPrice: 3999, image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400", gender: "unisex", subcategory: "Sneakers", color: "Black", rating: 4.5 },
+            { id: 110, name: "Canvas Sneakers", brand: "Vans", price: 2299, originalPrice: 3299, image: "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=400", gender: "unisex", subcategory: "Sneakers", color: "White", rating: 4.4 },
+            { id: 111, name: "Crossbody Bag", brand: "Coach", price: 4999, originalPrice: 6999, image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400", gender: "women", subcategory: "Handbags", color: "Black", rating: 4.7 },
+            { id: 112, name: "Tote Bag", brand: "Kate Spade", price: 3999, originalPrice: 5999, image: "https://images.unsplash.com/photo-1564422170194-896b89110ef8?w=400", gender: "women", subcategory: "Handbags", color: "Beige", rating: 4.6 },
+            { id: 113, name: "Clutch Bag", brand: "Michael Kors", price: 2999, originalPrice: 4499, image: "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=400", gender: "women", subcategory: "Handbags", color: "Gold", rating: 4.8 },
+            { id: 114, name: "Analog Watch", brand: "Seiko", price: 3999, originalPrice: 5999, image: "https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=400", gender: "men", subcategory: "Watches", color: "Silver", rating: 4.7 },
+            { id: 115, name: "Digital Watch", brand: "Casio", price: 1999, originalPrice: 2999, image: "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=400", gender: "men", subcategory: "Watches", color: "Black", rating: 4.5 },
+            { id: 116, name: "Makeup Palette", brand: "Huda Beauty", price: 2999, originalPrice: 4499, image: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=400", gender: "women", subcategory: "Beauty", color: "Multi", rating: 4.8 },
+            { id: 117, name: "Perfume Set", brand: "Victoria's Secret", price: 1999, originalPrice: 2999, image: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=400", gender: "women", subcategory: "Beauty", color: "Pink", rating: 4.7 },
+            { id: 118, name: "Face Serum", brand: "The Ordinary", price: 999, originalPrice: 1499, image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400", gender: "women", subcategory: "Beauty", color: "Clear", rating: 4.6 },
+            { id: 119, name: "Silver Bracelet", brand: "Pandora", price: 2999, originalPrice: 4499, image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400", gender: "women", subcategory: "Jewellery", color: "Silver", rating: 4.7 },
+            { id: 120, name: "Pearl Earrings", brand: "Tanishq", price: 3999, originalPrice: 5999, image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400", gender: "women", subcategory: "Jewellery", color: "White", rating: 4.8 }
+        ];
+
+        let cart = [];
+        let wishlist = [];
+        let currentProducts = [];
+        let filters = {
+            categories: [],
+            brands: [],
+            price: '',
+            colors: []
+        };
+        
+        // === NEW GLOBAL VARS FOR CHECKOUT ===
+        let cartTotals = {};
+        let shippingAddress = {};
+        // === END NEW VARS ===
+
+        function navigateToPage(pageName, options = {}) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageName).classList.add('active');
+            window.scrollTo(0, 0);
+
+            // UPDATED: Hide header/footer for checkout pages
+            if (['checkout-page', 'invoice-page', 'success-page'].includes(pageName)) {
+                document.querySelector('header').style.display = 'none';
+            } else {
+                document.querySelector('header').style.display = 'block';
+            }
+
+            if (pageName === 'products-page') {
+                loadProductsPage(options);
+            } else if (pageName === 'deals-page') {
+                loadDealsPage();
+            }
+        }
+        
+        // === NEW FUNCTION: SHOW CHECKOUT PAGE ===
+        function showCheckoutPage() {
+            navigateToPage('checkout-page');
+            document.getElementById('cart-flyout').classList.remove('active');
+            document.getElementById('cart-overlay').classList.remove('active');
+            
+            // Populate Order Summary
+            document.getElementById('checkout-subtotal').textContent = `₹${cartTotals.subtotal}`;
+            document.getElementById('checkout-shipping').textContent = cartTotals.shipping === 0 ? 'FREE' : `₹${cartTotals.shipping}`;
+            document.getElementById('checkout-tax').textContent = `₹${cartTotals.tax}`;
+            document.getElementById('checkout-total').textContent = `₹${cartTotals.total}`;
+            
+            const checkoutItems = document.getElementById('checkout-items');
+            checkoutItems.innerHTML = cart.map(item => `
+                <div class="flex gap-4">
+                    <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded">
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-sm">${item.name}</h4>
+                        <p class="text-xs text-gray-600">Qty: ${item.quantity}</p>
+                    </div>
+                    <span class="text-sm font-semibold">₹${item.price * item.quantity}</span>
+                </div>
+            `).join('');
+        }
+        
+        // === NEW FUNCTION: SHOW INVOICE PAGE ===
+        function showInvoicePage() {
+            navigateToPage('invoice-page');
+            
+            // Populate Shipping Address
+            const addressEl = document.getElementById('invoice-address');
+            addressEl.innerHTML = `
+                <p class="font-bold">${shippingAddress.name}</p>
+                <p>${shippingAddress.address1}</p>
+                <p>${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.zip}</p>
+                <p>${shippingAddress.phone}</p>
+                <p>${shippingAddress.email}</p>
+            `;
+            
+            // Populate Items
+            const invoiceItems = document.getElementById('invoice-items');
+            invoiceItems.innerHTML = cart.map(item => `
+                <div class="flex items-center gap-4 py-4 border-b">
+                    <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded">
+                    <div class="flex-1">
+                        <h4 class="font-semibold">${item.name}</h4>
+                        <p class="text-sm text-gray-600">${item.brand}</p>
+                    </div>
+                    <div class="text-sm text-gray-700">Qty: ${item.quantity}</div>
+                    <div class="font-semibold">₹${item.price * item.quantity}</div>
+                </div>
+            `).join('');
+            
+            // Populate Totals
+            document.getElementById('invoice-total').textContent = `₹${cartTotals.total}`;
+            
+            // Set Date
+            document.getElementById('invoice-date').textContent = new Date().toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric'
+            });
+        }
+        
+        // === NEW FUNCTION: SHOW SUCCESS PAGE ===
+        function showSuccessPage() {
+            navigateToPage('success-page');
+            // Clear cart
+            cart = [];
+            updateCart(); // Update UI
+        }
+
+        function loadProductsPage(options) {
+            currentProducts = [...products];
+
+            if (options.gender) {
+                currentProducts = currentProducts.filter(p => p.gender === options.gender || p.gender === 'unisex');
+            }
+
+            if (options.subcategory) {
+                const subcategories = options.subcategory.split(',');
+                currentProducts = currentProducts.filter(p => subcategories.includes(p.subcategory));
+            }
+
+            resetFilters();
+            populateFilters();
+            applyFilters();
+        }
+
+        function loadDealsPage() {
+            const dealsProducts = products.filter(p => p.originalPrice && ((p.originalPrice - p.price) / p.originalPrice) >= 0.3);
+            renderProducts(dealsProducts, 'deals-grid');
+        }
+
+        function resetFilters() {
+            filters = {
+                categories: [],
+                brands: [],
+                price: '',
+                colors: []
+            };
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.querySelectorAll('input[type="radio"]').forEach(rb => rb.checked = false);
+        }
+
+        function populateFilters() {
+            const categories = [...new Set(currentProducts.map(p => p.subcategory))];
+            const brands = [...new Set(currentProducts.map(p => p.brand))];
+            const colors = [...new Set(currentProducts.map(p => p.color))];
+
+            const categoryCounts = {};
+            const brandCounts = {};
+
+            categories.forEach(cat => {
+                categoryCounts[cat] = currentProducts.filter(p => p.subcategory === cat).length;
+            });
+
+            brands.forEach(brand => {
+                brandCounts[brand] = currentProducts.filter(p => p.brand === brand).length;
+            });
+
+            const categoryFilters = document.getElementById('category-filters');
+            categoryFilters.innerHTML = categories.map(cat => `
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" value="${cat}" class="category-filter">
+                    <span class="text-sm">${cat} (${categoryCounts[cat]})</span>
+                </label>
+            `).join('');
+
+            const brandFilters = document.getElementById('brand-filters');
+            brandFilters.innerHTML = brands.map(brand => `
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" value="${brand}" class="brand-filter">
+                    <span class="text-sm">${brand} (${brandCounts[brand]})</span>
+                </label>
+            `).join('');
+
+            const colorMap = {
+                'Black': 'bg-black',
+                'White': 'bg-white',
+                'Blue': 'bg-blue-500',
+                'Red': 'bg-red-500',
+                'Pink': 'bg-pink-500',
+                'Green': 'bg-green-500',
+                'Yellow': 'bg-yellow-400',
+                'Grey': 'bg-gray-400',
+                'Navy': 'bg-blue-900',
+                'Beige': 'bg-amber-100',
+                'Brown': 'bg-amber-800',
+                'Multi': 'bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500',
+                'Gold': 'bg-yellow-600',
+                'Silver': 'bg-gray-300',
+                'Khaki': 'bg-yellow-700',
+                'Burgundy': 'bg-red-900',
+                'Camel': 'bg-amber-600',
+                'Cream': 'bg-amber-50',
+                'Clear': 'bg-blue-100',
+                'Tortoise': 'bg-amber-900',
+                'Nude': 'bg-amber-200'
+            };
+
+            const colorFilters = document.getElementById('color-filters');
+            colorFilters.innerHTML = colors.map(color => `
+                <div>
+                    <input type="checkbox" id="color-${color}" value="${color}" class="color-checkbox hidden">
+                    <label for="color-${color}" class="block w-8 h-8 ${colorMap[color] || 'bg-gray-400'} rounded-full cursor-pointer transition ${color === 'White' ? 'border-2 border-gray-300' : ''}"></label>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.category-filter').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    filters.categories = Array.from(document.querySelectorAll('.category-filter:checked')).map(el => el.value);
+                    applyFilters();
+                });
+            });
+
+            document.querySelectorAll('.brand-filter').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    filters.brands = Array.from(document.querySelectorAll('.brand-filter:checked')).map(el => el.value);
+                    applyFilters();
+                });
+            });
+
+            document.querySelectorAll('.price-filter').forEach(rb => {
+                rb.addEventListener('change', () => {
+                    filters.price = rb.value;
+                    applyFilters();
+                });
+            });
+
+            document.querySelectorAll('.color-checkbox').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    filters.colors = Array.from(document.querySelectorAll('.color-checkbox:checked')).map(el => el.value);
+                    applyFilters();
+                });
+            });
+        }
+
+        function applyFilters() {
+            let filtered = [...currentProducts];
+
+            if (filters.categories.length > 0) {
+                filtered = filtered.filter(p => filters.categories.includes(p.subcategory));
+            }
+
+            if (filters.brands.length > 0) {
+                filtered = filtered.filter(p => filters.brands.includes(p.brand));
+            }
+
+            if (filters.price) {
+                const [min, max] = filters.price.split('-').map(Number);
+                filtered = filtered.filter(p => p.price >= min && p.price <= max);
+            }
+
+            if (filters.colors.length > 0) {
+                filtered = filtered.filter(p => filters.colors.includes(p.color));
+            }
+
+            renderProducts(filtered, 'product-grid');
+        }
+
+        function renderProducts(productsToRender, gridId) {
+            const grid = document.getElementById(gridId);
+
+            if (productsToRender.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center py-16 text-gray-500">No products found.</div>';
+                return;
+            }
+
+            grid.innerHTML = productsToRender.map(product => createProductCard(product)).join('');
+        }
+
+        function createProductCard(product) {
+            const discount = product.originalPrice ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
+            const isWishlisted = wishlist.some(item => item.id === product.id);
+
+            return `
+                <div class="product-card bg-white rounded-lg shadow-md border overflow-hidden group">
+                    <div class="relative aspect-square overflow-hidden">
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        <button class="wishlist-toggle absolute top-3 right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-pink-50 transition" data-id="${product.id}">
+                            <i class="ph${isWishlisted ? '-fill' : ''} ph-heart text-xl ${isWishlisted ? 'text-pink-500' : ''}"></i>
+                        </button>
+                        <button class="add-to-cart absolute bottom-3 right-3 w-10 h-10 bg-pink-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-pink-600 transition opacity-0 group-hover:opacity-100" data-id="${product.id}">
+                            <i class="ph-bold ph-shopping-cart text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-bold text-sm">${product.brand}</h3>
+                        <p class="text-sm text-gray-600 truncate">${product.name}</p>
+                        <div class="flex items-center gap-1 mt-1">
+                            <span class="text-sm font-semibold">${product.rating}</span>
+                            <i class="ph-fill ph-star text-yellow-400 text-sm"></i>
+                            <span class="text-xs text-gray-500">(${Math.floor(Math.random() * 200 + 50)})</span>
+                        </div>
+                        <div class="flex items-center gap-2 mt-2">
+                            <span class="font-bold text-lg">₹${product.price}</span>
+                            ${product.originalPrice ? `
+                                <span class="text-sm text-gray-400 line-through">₹${product.originalPrice}</span>
+                                <span class="text-xs text-pink-500 font-semibold">(${discount}% OFF)</span>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            const existingItem = cart.find(item => item.id === productId);
+
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+
+            updateCart();
+        }
+
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            updateCart();
+        }
+
+        function updateQuantity(productId, delta) {
+            const item = cart.find(item => item.id === productId);
+            if (item) {
+                item.quantity += delta;
+                if (item.quantity <= 0) {
+                    removeFromCart(productId);
+                } else {
+                    updateCart();
+                }
+            }
+        }
+
+        function updateCart() {
+            const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cart-count').textContent = cartCount;
+            
+            const checkoutBtn = document.getElementById('checkout-btn');
+            if(cartCount > 0) {
+                checkoutBtn.disabled = false;
+            } else {
+                checkoutBtn.disabled = true;
+            }
+
+            const cartItems = document.getElementById('cart-items');
+
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<div class="text-center text-gray-500 py-8">Your bag is empty</div>';
+            } else {
+                cartItems.innerHTML = cart.map(item => `
+                    <div class="flex gap-4 mb-6 pb-6 border-b">
+                        <img src="${item.image}" alt="${item.name}" class="w-24 h-24 object-cover rounded">
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-sm">${item.name}</h4>
+                            <p class="text-xs text-gray-600">${item.brand}</p>
+                            <p class="font-bold mt-1">₹${item.price}</p>
+                            <div class="flex items-center gap-3 mt-2">
+                                <button class="update-quantity w-6 h-6 bg-gray-200 rounded flex items-center justify-center hover:bg-gray-300" data-id="${item.id}" data-delta="-1">
+                                    <i class="ph-bold ph-minus text-xs"></i>
+                                </button>
+                                <span class="text-sm font-semibold">${item.quantity}</span>
+                                <button class="update-quantity w-6 h-6 bg-gray-200 rounded flex items-center justify-center hover:bg-gray-300" data-id="${item.id}" data-delta="1">
+                                    <i class="ph-bold ph-plus text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button class="remove-from-cart text-gray-400 hover:text-red-500" data-id="${item.id}">
+                            <i class="ph-bold ph-trash text-xl"></i>
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const shipping = subtotal > 0 ? (subtotal > 1000 ? 0 : 99) : 0;
+            const tax = Math.round(subtotal * 0.18);
+            const total = subtotal + shipping + tax;
+
+            // Store totals globally for other pages
+            cartTotals = { subtotal, shipping, tax, total };
+
+            document.getElementById('cart-subtotal').textContent = `₹${subtotal}`;
+            document.getElementById('cart-shipping').textContent = shipping === 0 && subtotal > 0 ? 'FREE' : `₹${shipping}`;
+            document.getElementById('cart-tax').textContent = `₹${tax}`;
+            document.getElementById('cart-total').textContent = `₹${total}`;
+        }
+
+        function toggleWishlist(productId) {
+            const index = wishlist.findIndex(item => item.id === productId);
+
+            if (index > -1) {
+                wishlist.splice(index, 1);
+            } else {
+                const product = products.find(p => p.id === productId);
+                wishlist.push(product);
+            }
+
+            document.getElementById('wishlist-count').textContent = wishlist.length;
+
+            document.querySelectorAll(`.wishlist-toggle[data-id="${productId}"]`).forEach(btn => {
+                const icon = btn.querySelector('i');
+                if (index > -1) {
+                    icon.classList.remove('ph-fill', 'text-pink-500');
+                } else {
+                    icon.classList.add('ph-fill', 'text-pink-500');
+                }
+            });
+        }
+
+        // === GLOBAL EVENT LISTENERS ===
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.nav-link')) {
+                e.preventDefault();
+                const link = e.target.closest('.nav-link');
+                const page = link.dataset.page;
+                const gender = link.dataset.gender;
+                const subcategory = link.dataset.subcategory;
+
+                navigateToPage(page, { gender, subcategory });
+            }
+
+            if (e.target.closest('.add-to-cart')) {
+                const btn = e.target.closest('.add-to-cart');
+                const productId = parseInt(btn.dataset.id);
+                addToCart(productId);
+            }
+
+            if (e.target.closest('.wishlist-toggle')) {
+                const btn = e.target.closest('.wishlist-toggle');
+                const productId = parseInt(btn.dataset.id);
+                toggleWishlist(productId);
+            }
+
+            if (e.target.closest('.remove-from-cart')) {
+                const btn = e.target.closest('.remove-from-cart');
+                const productId = parseInt(btn.dataset.id);
+                removeFromCart(productId);
+            }
+
+            if (e.target.closest('.update-quantity')) {
+                const btn = e.target.closest('.update-quantity');
+                const productId = parseInt(btn.dataset.id);
+                const delta = parseInt(btn.dataset.delta);
+                updateQuantity(productId, delta);
+            }
+        });
+
+        // Cart Flyout
+        document.getElementById('cart-btn').addEventListener('click', () => {
+            document.getElementById('cart-flyout').classList.add('active');
+            document.getElementById('cart-overlay').classList.add('active');
+        });
+
+        document.getElementById('close-cart').addEventListener('click', () => {
+            document.getElementById('cart-flyout').classList.remove('active');
+            document.getElementById('cart-overlay').classList.remove('active');
+        });
+
+        document.getElementById('cart-overlay').addEventListener('click', () => {
+            document.getElementById('cart-flyout').classList.remove('active');
+            document.getElementById('cart-overlay').classList.remove('active');
+            document.getElementById('auth-modal').classList.remove('active');
+        });
+
+        // Auth Modal
+        document.getElementById('profile-btn').addEventListener('click', () => {
+            document.getElementById('auth-modal').classList.add('active');
+            document.getElementById('cart-overlay').classList.add('active');
+        });
+
+        document.getElementById('close-auth-modal').addEventListener('click', () => {
+            document.getElementById('auth-modal').classList.remove('active');
+            document.getElementById('cart-overlay').classList.remove('active');
+        });
+
+        // Filters
+        document.getElementById('clear-filters').addEventListener('click', () => {
+            resetFilters();
+            applyFilters();
+        });
+
+        // Home Page
+        document.getElementById('autumn-sale-btn').addEventListener('click', () => {
+            navigateToPage('products-page', { subcategory: 'Jackets,Sweaters,Blazers & Coats,Boots,Sweatshirts' });
+        });
+        
+        // === NEW CHECKOUT EVENT LISTENERS ===
+        
+        // 1. "Checkout" button in cart
+        document.getElementById('checkout-btn').addEventListener('click', () => {
+            showCheckoutPage();
+        });
+        
+        // 2. "Proceed to Payment" button on address form
+        document.getElementById('address-form').addEventListener('submit', (e) => {
+            e.preventDefault(); // Prevent form from reloading page
+            
+            // Save address to global variable
+            shippingAddress = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                address1: document.getElementById('address1').value,
+                city: document.getElementById('city').value,
+                state: document.getElementById('state').value,
+                zip: document.getElementById('zip').value,
+            };
+            
+            showInvoicePage();
+        });
+        
+        // 3. "Confirm & Pay" button on invoice page
+        document.getElementById('confirm-payment-btn').addEventListener('click', () => {
+            showSuccessPage();
+        });
+        
+        // 4. "Shop Again" button on success page
+        document.getElementById('new-order-btn').addEventListener('click', () => {
+            navigateToPage('home-page');
+        });
+        
+        // === END NEW LISTENERS ===
+
+        function setupCarousel(containerId, prevBtnId, nextBtnId) {
+            const container = document.getElementById(containerId);
+            const prevBtn = document.getElementById(prevBtnId);
+            const nextBtn = document.getElementById(nextBtnId);
+
+            if (prevBtn && nextBtn && container) {
+                prevBtn.addEventListener('click', () => {
+                    container.scrollBy({ left: -400, behavior: 'smooth' });
+                });
+
+                nextBtn.addEventListener('click', () => {
+                    container.scrollBy({ left: 400, behavior: 'smooth' });
+                });
+
+                const section = container.closest('section');
+                if (section) {
+                    section.addEventListener('mouseenter', () => {
+                        prevBtn.style.opacity = '1';
+                        nextBtn.style.opacity = '1';
+                    });
+
+                    section.addEventListener('mouseleave', () => {
+                        prevBtn.style.opacity = '0';
+                        nextBtn.style.opacity = '0';
+                    });
+                }
+            }
+        }
+
+        function initializeHomePage() {
+            const featuredProducts = products.filter(p => p.rating >= 4.5).slice(0, 12);
+            const featuredGrid = document.getElementById('featured-products-grid');
+            featuredGrid.innerHTML = featuredProducts.map(product => `
+                <div class="flex-none w-72">${createProductCard(product)}</div>
+            `).join('');
+
+            const dealCategories = [
+                { title: 'MIN. 50% OFF', category: 'Sneakers', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400', brands: ['Nike', 'Adidas', 'Puma'] },
+                { title: 'MIN. 60% OFF', category: 'Jackets', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400', brands: ['Zara', 'H&M', 'Levis'] },
+                { title: 'MIN. 40% OFF', category: 'Watches', image: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=400', brands: ['Fossil', 'Seiko', 'Casio'] },
+                { title: 'MIN. 70% OFF', category: 'Beauty', image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400', brands: ['MAC', 'Neutrogena', 'Huda'] },
+                { title: 'MIN. 50% OFF', category: 'Handbags', image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400', brands: ['Coach', 'Michael Kors'] },
+                { title: 'MIN. 55% OFF', category: 'Sunglasses & Frames', image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400', brands: ['Ray-Ban', 'Oakley', 'Gucci'] }
+            ];
+
+            const dealsContainer = document.getElementById('crazy-deals-container');
+            dealsContainer.innerHTML = dealCategories.map(deal => `
+                <div class="flex-none w-80">
+                    <div class="deal-card bg-white shadow-lg pt-12 cursor-pointer hover:scale-105 transition nav-link" data-page="products-page" data-subcategory="${deal.category}">
+                        <img src="${deal.image}" alt="${deal.category}" class="w-full h-48 object-cover">
+                        <div class="p-6 text-center">
+                            <h3 class="font-bold text-2xl text-pink-500 mb-2">${deal.title}</h3>
+                            <p class="text-lg font-semibold mb-3">${deal.category}</p>
+                            <div class="flex justify-center gap-2 flex-wrap">
+                                ${deal.brands.map(brand => `<span class="text-xs bg-gray-100 px-3 py-1 rounded-full">${brand}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            setupCarousel('featured-products-grid', 'featured-prev', 'featured-next');
+            setupCarousel('crazy-deals-container', 'crazy-deals-prev', 'crazy-deals-next');
+        }
+
+        window.addEventListener('load', () => {
+            initializeHomePage();
+            updateCart(); // Initialize cart state (e.g., disable checkout button if empty)
+
+            gsap.from('.hero-title', {
+                opacity: 0,
+                y: 50,
+                duration: 1,
+                delay: 0.3
+            });
+
+            gsap.from('.hero-subtitle', {
+                opacity: 0,
+                y: 50,
+                duration: 1,
+                delay: 0.5
+            });
+
+            gsap.from('.hero-discount', {
+                opacity: 0,
+                scale: 0.5,
+                duration: 1,
+                delay: 0.7
+            });
+
+            gsap.from('#autumn-sale-btn', {
+                opacity: 0,
+                y: 30,
+                duration: 1,
+                delay: 0.9
+            });
+
+            ScrollTrigger.create({
+                trigger: '#featured-section',
+                start: 'top 80%',
+                onEnter: () => {
+                    gsap.from('#featured-section h2', {
+                        opacity: 0,
+                        y: 30,
+                        duration: 0.8
+                    });
+                    gsap.from('#featured-products-grid .product-card', {
+                        opacity: 0,
+                        y: 50,
+                        stagger: 0.1,
+                        duration: 0.8
+                    });
+                }
+            });
+
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    gsap.to(card, {
+                        rotationY: 5,
+                        rotationX: 5,
+                        duration: 0.3
+                    });
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    gsap.to(card, {
+                        rotationY: 0,
+                        rotationX: 0,
+                        duration: 0.3
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
